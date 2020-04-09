@@ -1,0 +1,11 @@
+{
+  "name": "tokenization-smart-contracts",
+  "version": "0.0.0",
+  "description": "Asset Tokenization module for Konkrete",
+  "main": "index.js",
+  "scripts": {
+    "test": "truffle  test"
+  },
+  "author": "",
+  "license": "ISC"
+}
