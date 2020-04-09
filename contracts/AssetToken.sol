@@ -15,8 +15,8 @@ contract AssetToken is ERC20, ERC20Detailed, Ownable {
      * these values are immutable: they can only be set once during
      * construction.
      */
-    constructor (string memory name, string memory symbol, uint256 supply) ERC20Detailed(name, symbol, 18) public {
-        _mint(msg.sender, supply);
+    constructor (string memory name, string memory symbol) ERC20Detailed(name, symbol, 18) public {
+        // _mint(msg.sender, supply);
     }
 
     /**
