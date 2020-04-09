@@ -1,0 +1,5 @@
+# truffle contract builds
+build
+
+# env file
+.env
