@@ -1,7 +1,10 @@
 const Master = artifacts.require('Master');
 const ERC20 = artifacts.require('ERC20');
+const Asset = artifacts.require('Asset');
+const AssetToken = artifacts.require('AssetToken');
 
 let master, randomErc20, accounts;
+const nullAddress = '0x0000000000000000000000000000000000000000';
 
 before('Deploy master contract', async () => {
   master = await Master.deployed();
@@ -54,6 +57,28 @@ describe('Master Deployment', () => {
       assert.equal(args.paymentToken, randomErc20.address, 'payment token');
       assert.equal(web3.utils.toHex(args.dueDate), web3.utils.toHex(now + 100), 'due date');
       assert.equal(args.initialSupply, web3.utils.toWei('1', 'ether'), 'initial mint amount');
+
+      let allAssets = await master.getAllAssets();
+      assert.equal(allAssets.length, 1, 'number of asset contracts');
+      assert.equal(allAssets[0], args.assetAddress, 'new added asset address');
+      const assetContract = await Asset.at(allAssets[0]);
+      assert.equal(await assetContract.collectBuyerDetails.call(), true, 'buyer detail switch');
+      assert.equal(await assetContract.state.call(), 0, 'initial state enum');
+      assert.equal(web3.utils.toHex(await assetContract.dueDate.call()), web3.utils.toHex(now + 100), 'due date');
+      assert.equal(await assetContract.erc20Token.call(), randomErc20.address, 'payment token');
+      assert.equal(await assetContract.ownerAddress.call(), user1, 'deployer or user1');
+      assert.equal(web3.utils.toUtf8(await assetContract.ownerEmail.call()), web3.utils.toUtf8(email), 'user email');
+      assert.equal(web3.utils.toUtf8(await assetContract.documentUrl.call()), web3.utils.toUtf8(docUrl), 'documet url');
+      
+      // asset token
+      let assetTokenAddr = await assetContract.assetToken.call();
+      assert.notEqual(assetTokenAddr, nullAddress, 'deployed asset token address');
+      let assetTokenCon = await AssetToken.at(assetTokenAddr);
+      assert.equal(await assetTokenCon.name(), 'Token1', 'token name');
+      assert.equal(await assetTokenCon.symbol(), 'TKN1', 'token symbol');
+      assert.equal(await assetTokenCon.decimals(), 18, 'token decimals');
+      assert.equal(await assetTokenCon.totalSupply(), web3.utils.toWei('1', 'ether'), 'token totalsupply');
+      assert.equal(await assetTokenCon.balanceOf(user1), web3.utils.toWei('1', 'ether'), 'token balance of user 1');
     }) 
   });
 });

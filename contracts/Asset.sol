@@ -33,7 +33,7 @@ contract Asset {
             ownerEmail = _email;
         }
         assetToken = address(new AssetToken(_name, _symbol));
-        AssetToken(assetToken).mint(msg.sender, _supplyToMint);
+        AssetToken(assetToken).mint(_owner, _supplyToMint);
     }
 
     function mintTokens(uint256 amount) public {
