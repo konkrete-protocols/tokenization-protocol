@@ -6,7 +6,10 @@ import "./external/interfaces/IERC20.sol";
 
 contract Asset {
 
+    enum State {Initialized, Settled}
+
     bool public collectBuyerDetails;
+    State public state;
     uint256 public dueDate;
     address public assetToken;
     address public erc20Token;
@@ -15,7 +18,7 @@ contract Asset {
     bytes32 public documentUrl;
 
     constructor(bytes32 _url, uint256 _dueDate, bool _collectBuyerDetails, bytes32 _email, address _erc20Token,
-        string memory _name, string memory _symbol, uint256 _supplyToMint
+        string memory _name, string memory _symbol, uint256 _supplyToMint, address _owner
     ) public {
         require(_url != "", "Empty document url");
         require(_dueDate > now, "Due date has already passed");
@@ -24,7 +27,7 @@ contract Asset {
         erc20Token = _erc20Token;
         documentUrl = _url;
         dueDate = _dueDate;
-        ownerAddress = msg.sender;
+        ownerAddress = _owner;
         collectBuyerDetails = _collectBuyerDetails;
         if (collectBuyerDetails) {
             ownerEmail = _email;
