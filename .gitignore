@@ -3,3 +3,7 @@ build
 
 # env file
 .env
+
+# node files
+node_modules
+package-lock.json

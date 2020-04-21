@@ -8,5 +8,12 @@
     "test": "truffle test"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "truffle-plugin-verify": "^0.3.10"
+  },
+  "dependencies": {
+    "@truffle/hdwallet-provider": "^1.0.34",
+    "dotenv": "^8.2.0"
+  }
 }
