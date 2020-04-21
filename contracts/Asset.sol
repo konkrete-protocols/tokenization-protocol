@@ -14,13 +14,13 @@ contract Asset {
     address public assetToken;
     address public erc20Token;
     address public ownerAddress;
-    bytes32 public ownerEmail;
-    bytes32 public documentUrl;
+    string public ownerEmail;
+    string public documentUrl;
 
-    constructor(bytes32 _url, uint256 _dueDate, bool _collectBuyerDetails, bytes32 _email, address _erc20Token,
+    constructor(string memory _url, uint256 _dueDate, bool _collectBuyerDetails, string memory _email, address _erc20Token,
         string memory _name, string memory _symbol, uint256 _supplyToMint, address _owner
     ) public {
-        require(_url != "", "Empty document url");
+        require(bytes(_url).length != 0, "Empty document url");
         require(_dueDate > now, "Due date has already passed");
 
         IERC20(_erc20Token).totalSupply;
