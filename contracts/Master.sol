@@ -11,9 +11,10 @@ contract Master {
     address[] public assets;
 
     function addAsset(string memory _url, uint256 _dueDate, bool _collectBuyerDetails, string memory _email, address _erc20Token,
-        string memory _name, string memory _symbol, uint256 _supplyToMint
+        string memory _name, string memory _symbol, uint8 _decimals, uint256 _supplyToMint
     ) public returns (address newAsset) {
-        Asset _asset = new Asset(_url, _dueDate, _collectBuyerDetails, _email, _erc20Token, _name, _symbol, _supplyToMint, msg.sender);
+        Asset _asset = new
+            Asset(_url, _dueDate, _collectBuyerDetails, _email, _erc20Token, _name, _symbol, _decimals, _supplyToMint, msg.sender);
         assets.push(address(_asset));
         emit AssetAdded(address(_asset), _url, msg.sender, _erc20Token, _dueDate, _supplyToMint);
         return address(_asset);
