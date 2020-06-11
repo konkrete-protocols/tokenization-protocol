@@ -1,6 +1,5 @@
 const Master = artifacts.require('Master');
 const ERC20 = artifacts.require('ERC20');
-const Asset = artifacts.require('Asset');
 const AssetToken = artifacts.require('AssetToken');
 
 let master, randomErc20, accounts;
@@ -33,8 +32,8 @@ describe('Master Deployment', () => {
 
   describe('Adding an Asset', () => {
     
-    let docUrl = web3.utils.toHex('aa');
-    let email = web3.utils.toHex('my@email.com');
+    let docUrl = 'https://abc.com';
+    let email = 'my@email.com';
     let blockNumber, now;
   
     it('set now', async() => {
@@ -44,7 +43,7 @@ describe('Master Deployment', () => {
   
     it('Add an asset', async() => {
       user1 = accounts[1];
-      let newAssetTx = await master.addAsset(docUrl, now + 100, true, email, randomErc20.address, 'Token1', 'TKN1', web3.utils.toWei('1', 'ether'), {
+      let newAssetTx = await master.addAsset(docUrl, now + 100, true, email, randomErc20.address, 'Token1', 'TKN1', 18, web3.utils.toWei('1', 'ether'), {
         from: user1
       });
   
@@ -52,7 +51,7 @@ describe('Master Deployment', () => {
       const log = newAssetTx.logs[0];
       const args = newAssetTx.logs[0].args;
       assert.equal(log.event, 'AssetAdded', 'Event name');
-      assert.equal(web3.utils.toUtf8(args.url), web3.utils.toUtf8(docUrl), 'document url');
+      assert.exists(args.url, 'document url');
       assert.equal(args.ownerAddress, user1, 'user address');
       assert.equal(args.paymentToken, randomErc20.address, 'payment token');
       assert.equal(web3.utils.toHex(args.dueDate), web3.utils.toHex(now + 100), 'due date');
@@ -61,24 +60,21 @@ describe('Master Deployment', () => {
       let allAssets = await master.getAllAssets();
       assert.equal(allAssets.length, 1, 'number of asset contracts');
       assert.equal(allAssets[0], args.assetAddress, 'new added asset address');
-      const assetContract = await Asset.at(allAssets[0]);
+      const assetContract = await AssetToken.at(allAssets[0]);
       assert.equal(await assetContract.collectBuyerDetails.call(), true, 'buyer detail switch');
       assert.equal(await assetContract.state.call(), 0, 'initial state enum');
       assert.equal(web3.utils.toHex(await assetContract.dueDate.call()), web3.utils.toHex(now + 100), 'due date');
       assert.equal(await assetContract.erc20Token.call(), randomErc20.address, 'payment token');
       assert.equal(await assetContract.ownerAddress.call(), user1, 'deployer or user1');
-      assert.equal(web3.utils.toUtf8(await assetContract.ownerEmail.call()), web3.utils.toUtf8(email), 'user email');
-      assert.equal(web3.utils.toUtf8(await assetContract.documentUrl.call()), web3.utils.toUtf8(docUrl), 'documet url');
+      assert.equal(await assetContract.ownerEmail.call(), email, 'user email');
+      assert.equal(await assetContract.documentUrl.call(), docUrl, 'documet url');
       
       // asset token
-      let assetTokenAddr = await assetContract.assetToken.call();
-      assert.notEqual(assetTokenAddr, nullAddress, 'deployed asset token address');
-      let assetTokenCon = await AssetToken.at(assetTokenAddr);
-      assert.equal(await assetTokenCon.name(), 'Token1', 'token name');
-      assert.equal(await assetTokenCon.symbol(), 'TKN1', 'token symbol');
-      assert.equal(await assetTokenCon.decimals(), 18, 'token decimals');
-      assert.equal(await assetTokenCon.totalSupply(), web3.utils.toWei('1', 'ether'), 'token totalsupply');
-      assert.equal(await assetTokenCon.balanceOf(user1), web3.utils.toWei('1', 'ether'), 'token balance of user 1');
+      assert.equal(await assetContract.name(), 'Token1', 'token name');
+      assert.equal(await assetContract.symbol(), 'TKN1', 'token symbol');
+      assert.equal(await assetContract.decimals(), 18, 'token decimals');
+      assert.equal(await assetContract.totalSupply(), web3.utils.toWei('1', 'ether'), 'token totalsupply');
+      assert.equal(await assetContract.balanceOf(user1), web3.utils.toWei('1', 'ether'), 'token balance of user 1');
     }) 
   });
 });

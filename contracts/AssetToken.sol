@@ -3,27 +3,42 @@ pragma solidity 0.5.16;
 
 import "./external/ERC20.sol";
 import "./external/ERC20Detailed.sol";
-import "./external/Ownable.sol";
 
-/**
- * @dev Extension of `ERC20`
- */
-contract AssetToken is ERC20, ERC20Detailed, Ownable {
+contract AssetToken is ERC20, ERC20Detailed {
 
-    /**
-     * @dev Sets the values for `name`, `symbol`, and `decimals`. All three of
-     * these values are immutable: they can only be set once during
-     * construction.
-     */
-    constructor (string memory name, string memory symbol, uint8 decimals) ERC20Detailed(name, symbol, decimals) public {
+    enum State {Initialized, Settled}
+
+    bool public collectBuyerDetails;
+    State public state;
+    uint256 public dueDate;
+    address public erc20Token;
+    address public ownerAddress;
+    string public ownerEmail;
+    string public documentUrl;
+
+    constructor(string memory _url, uint256 _dueDate, bool _collectBuyerDetails, string memory _email, address _erc20Token,
+        string memory _name, string memory _symbol, uint8 _decimals, uint256 _supplyToMint, address _owner
+    ) ERC20Detailed(_name, _symbol, _decimals)
+      public {
+        require(bytes(_url).length != 0, "Empty document url");
+        require(_dueDate > now, "Due date has already passed");     // maybe duedate is optional
+
+        IERC20(_erc20Token).totalSupply;
+        erc20Token = _erc20Token;
+        documentUrl = _url;
+        dueDate = _dueDate;
+        ownerAddress = _owner;
+        collectBuyerDetails = _collectBuyerDetails;
+        if (collectBuyerDetails) {
+            ownerEmail = _email;
+        }
+        _mint(_owner, _supplyToMint);
     }
 
-    /**
-     * @dev See `ERC20._mint`.
-     */
-    function mint(address account, uint256 amount) public onlyOwner returns (bool) {
-        _mint(account, amount);
-        return true;
+    function mintTokens(uint256 amount) public {
+        require(msg.sender == ownerAddress, "Caller is not Owner");
+
+        _mint(ownerAddress, amount);
     }
 
     /**
@@ -40,5 +55,13 @@ contract AssetToken is ERC20, ERC20Detailed, Ownable {
      */
     function burnFrom(address account, uint256 amount) public {
         _burnFrom(account, amount);
+    }
+
+    function buyToken() public {
+        
+    }
+
+    function redeemToken() public {
+        
     }
 }
