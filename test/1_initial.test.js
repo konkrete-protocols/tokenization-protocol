@@ -65,7 +65,7 @@ describe('Master Deployment', () => {
       assert.equal(await assetContract.state.call(), 0, 'initial state enum');
       assert.equal(web3.utils.toHex(await assetContract.dueDate.call()), web3.utils.toHex(now + 100), 'due date');
       assert.equal(await assetContract.erc20Token.call(), randomErc20.address, 'payment token');
-      assert.equal(await assetContract.ownerAddress.call(), user1, 'deployer or user1');
+      assert.equal(await assetContract.owner.call(), user1, 'deployer or user1');
       assert.equal(await assetContract.ownerEmail.call(), email, 'user email');
       assert.equal(await assetContract.documentUrl.call(), docUrl, 'documet url');
       

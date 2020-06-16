@@ -13,7 +13,7 @@ const {
   expectRevert, // Assertions for transactions that should fail
 } = require('@openzeppelin/test-helpers');
 
-const Pool = artifacts.require('ClaimPool');
+const Pool = artifacts.require('PoolToken');
 const MockErc20 = artifacts.require('TestERC20');
 
 
