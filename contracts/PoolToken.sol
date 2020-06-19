@@ -2,6 +2,7 @@
 pragma solidity 0.5.16;
 
 import "./BasePoolToken.sol";
+import "./external/interfaces/IRToken.sol";
 
 contract PoolToken is BasePoolToken {
     using SafeMath for uint256;
@@ -18,9 +19,21 @@ contract PoolToken is BasePoolToken {
     }
 
     function redeem(uint256 redeemAmount) external returns (bool success) {
-        // TODO fetch liquidity
+        IRToken rToken = IRToken(erc20Token);
+        require(rToken.payInterest(address(this)), "RToken pay interest failed");
 
         return redeemInternal(msg.sender, redeemAmount);
+    }
+
+    function redeemPay(uint256 redeemAmount) external returns (bool success) {
+
+        IRToken rToken = IRToken(erc20Token);
+        require(rToken.payInterest(address(this)), "RToken pay interest failed");
+
+        uint256 calcRedeemAmount = calcRedeemAmount(redeemAmount);
+        require(rToken.redeemAndTransfer(msg.sender, calcRedeemAmount), "RToken redeemAndTransfer failed");
+
+        return true;
     }
 
 }

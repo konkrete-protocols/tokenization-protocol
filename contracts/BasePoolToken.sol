@@ -29,20 +29,25 @@ contract BasePoolToken is ERC20, ERC20Detailed, Ownable {
     }
 
     function redeemInternal(address payable redeemer, uint256 inputAmount) internal nonReentrant returns (bool success) {
-        IERC20 Erc20Token = IERC20(erc20Token);
-        uint256 circulationSupply = totalSupply().sub(balanceOf(owner()));
-
-        uint256 poolBalance = Erc20Token.balanceOf(address(this));
-        uint256 redeemAmount = inputAmount.mul(poolBalance).div(circulationSupply);
+        uint256 redeemAmount = calcRedeemAmount(inputAmount);
 
         _burn(redeemer, inputAmount);
 
-        require(Erc20Token.balanceOf(address(this)) >= redeemAmount, "Insufficient Funds");
+        require(IERC20(erc20Token).balanceOf(address(this)) >= redeemAmount, "Insufficient Funds");
         doTransferOut(redeemer, redeemAmount);
 
         emit Redeem(redeemer, redeemAmount);
 
         return true;
+    }
+
+    function calcRedeemAmount(uint256 toBeRedeemedTokens) public view returns (uint256) {
+        IERC20 Erc20Token = IERC20(erc20Token);
+
+        uint256 circulationSupply = totalSupply().sub(balanceOf(owner()));
+        uint256 poolBalance = Erc20Token.balanceOf(address(this));
+
+        return toBeRedeemedTokens.mul(poolBalance).div(circulationSupply);
     }
 
     /**
