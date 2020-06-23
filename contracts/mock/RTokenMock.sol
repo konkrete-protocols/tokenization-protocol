@@ -13,8 +13,12 @@ contract RTokenMock is TestERC20 {
     event TransferZ(address indexed from, address indexed to, uint256 value);
 
     uint256 public interestAmount;
+    TestERC20 public token;
 
-    constructor (string memory name, string memory symbol, uint8 decimals) TestERC20(name, symbol, decimals) public {
+    constructor (string memory name, string memory symbol, uint8 decimals, address underlying)
+        TestERC20(name, symbol, decimals)
+    public {
+        token = TestERC20(underlying);
     }
 
     function setInterestAmount(uint256 amount) external {
@@ -30,5 +34,14 @@ contract RTokenMock is TestERC20 {
     function interestPayableOf(address owner) external view returns (uint256 amount) {
         owner;      // unused
         return interestAmount;
+    }
+
+    function redeemAndTransfer(address redeemTo, uint256 redeemTokens)
+        external
+        returns (bool)
+    {
+        _burn(msg.sender, redeemTokens);
+        token.mint(redeemTo, redeemTokens);
+        return true;
     }
 }

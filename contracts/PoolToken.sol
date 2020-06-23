@@ -25,14 +25,18 @@ contract PoolToken is BasePoolToken {
         return redeemInternal(msg.sender, redeemAmount);
     }
 
-    function redeemPay(uint256 redeemAmount) external returns (bool success) {
+    function redeemCash(uint256 redeemAmount) external returns (bool success) {
 
         IRToken rToken = IRToken(erc20Token);
         require(rToken.payInterest(address(this)), "RToken pay interest failed");
 
+        // first calculate then burn
         uint256 calcRedeemAmount = calcRedeemAmount(redeemAmount);
+
+        _burn(msg.sender, redeemAmount);
         require(rToken.redeemAndTransfer(msg.sender, calcRedeemAmount), "RToken redeemAndTransfer failed");
 
+        emit Redeem(msg.sender, calcRedeemAmount);
         return true;
     }
 
