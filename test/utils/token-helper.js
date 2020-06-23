@@ -1,5 +1,5 @@
 
-const { BN } = require('@openzeppelin/test-helpers');
+const BigNumber = require('bignumber.js');
 
 const tokenToDecimal = (amount, decimals) => {
   decimals = parseFloat(decimals);
@@ -14,16 +14,16 @@ const decimalToToken = (amount, decimals) => {
 }
 
 const tokenToDecimalBN = (amount, decimals) => {
-  amount = new BN(amount);
-  decimals = new BN(decimals);
-  let ten = new BN(10);
-  return amount.mul(ten.pow(decimals));  
+  amount = new BigNumber(amount);
+  decimals = new BigNumber(decimals);
+  let ten = new BigNumber(10);
+  return amount.times(ten.pow(decimals));  
 }
 
 const decimalToTokenBN = (amount, decimals) => {
-  amount = new BN(amount);
-  decimals = new BN(decimals);
-  let ten = new BN(10);
+  amount = new BigNumber(amount);
+  decimals = new BigNumber(decimals);
+  let ten = new BigNumber(10);
   return amount.div(ten.pow(decimals));
 }
 
