@@ -16,6 +16,8 @@ const {
 const Pool = artifacts.require('BasePoolTokenMock');
 const MockErc20 = artifacts.require('TestERC20');
 
+//  For decimal truncation like solidity
+BigNumber.config({ ROUNDING_MODE: BigNumber.ROUND_DOWN })
 
 let PoolC, MockErc20C, accounts;
 let users = {};
@@ -24,6 +26,12 @@ const onePoolTokenValue = async () => {
   let poolErcBal = await MockErc20C.balanceOf(PoolC.address);
   let poolTokenCirculation = (await PoolC.totalSupply()).sub(await PoolC.balanceOf(users.superAdmin));
   return parseFloat(poolErcBal) / parseFloat(poolTokenCirculation);
+}
+
+const onePoolTokenValueBN = async () => {
+  let poolErcBal = await MockErc20C.balanceOf(PoolC.address);
+  let poolTokenCirculation = (await PoolC.totalSupply()).sub(await PoolC.balanceOf(users.superAdmin));
+  return BigNumber(poolErcBal).div(BigNumber(poolTokenCirculation));
 }
 
 before('Deploy Erc20 and Pool contract', async () => {
@@ -39,6 +47,8 @@ it('Get accounts', async () => {
   accounts = await web3.eth.getAccounts();
   users.superAdmin = accounts[0];
   users.randomUser = accounts[1];
+  users.redeemer1 = accounts[2];
+  users.redeemer2 = accounts[3];
 });
 describe('Pool Deployment Test', () => {
   it('check name, symbol, decimal', async() => {
@@ -88,7 +98,6 @@ describe('Mint Pool Tokens', () => {
 });
 describe('Redeem Cases', () => {
   before('Give erc20 balance to pool and reduce pool tokens', async () => {
-    users.redeemer1 = accounts[2];
     await MockErc20C.mint(PoolC.address, tokenToDecimalBN(100, await MockErc20C.decimals()));
     await PoolC.transfer(users.redeemer1, tokenToDecimalBN(100, await MockErc20C.decimals()));
   });
@@ -135,7 +144,7 @@ describe('Redeem Cases', () => {
   it('Mint 500 erc20 and redeem 10 pool tokens', async() => {
     await MockErc20C.mint(PoolC.address, tokenToDecimalBN(500, await MockErc20C.decimals()));
     assert.ok(BigNumber(await MockErc20C.balanceOf(PoolC.address))
-      .eq(tokenToDecimalBN(590, await MockErc20C.decimals())), 'erc20 balance of pool is not 590 ');
+      .eq(tokenToDecimalBN(590, await MockErc20C.decimals())), 'erc20 balance of pool is not 590');
     assert.ok(BigNumber(await PoolC.totalSupply()).minus(await PoolC.balanceOf(users.superAdmin))
       .eq(tokenToDecimalBN(90, await PoolC.decimals())), 'total circulation is not 90');
 
@@ -163,28 +172,37 @@ describe('Redeem Cases', () => {
     await MockErc20C.mint(PoolC.address, mintAmount);
 
     let expectedErcBalPool = initialErcBalPool.plus(mintAmount);
-    assert.ok(BigNumber(await MockErc20C.balanceOf(PoolC.address)).eq(expectedErcBalPool) )
+    assert.ok(BigNumber(await MockErc20C.balanceOf(PoolC.address)).eq(expectedErcBalPool), 'erc20 balance of pool is not 5524.45');
 
-    // assert.ok((await PoolC.totalSupply()).sub(await PoolC.balanceOf(users.superAdmin))
-    //   .eq(tokenToDecimalBN(90, await PoolC.decimals())), 'total circulation is not 90');
+    await PoolC.mintPoolTokens(tokenToDecimalBN(200, await MockErc20C.decimals()), {
+      from: users.superAdmin,
+    });
+    await PoolC.transfer(users.redeemer2, tokenToDecimalBN(200, await MockErc20C.decimals()), {
+      from: users.superAdmin
+    });
 
-    // let initialErcBalRedeemer1 = new BN(await MockErc20C.balanceOf(users.redeemer1));
-    // assert.ok(initialErcBalRedeemer1.eq(tokenToDecimalBN(10, await MockErc20C.decimals())), 'redeemer bal is not 10');
-    
+    let realCirculationSupply = (await PoolC.totalSupply()).sub(await PoolC.balanceOf(users.superAdmin));
+    realCirculationSupply = BigNumber(realCirculationSupply)
+    assert.ok(realCirculationSupply.eq(tokenToDecimalBN(280, await PoolC.decimals())), 'total circulation is not 280');
 
-    // let redeemAmount = tokenToDecimalBN(10, await PoolC.decimals());
-    
-    // let expectedReturn = parseFloat(redeemAmount) * await onePoolTokenValue();
-    // expectedReturn = decimalToToken(expectedReturn, await MockErc20C.decimals());
-    // let expectedFinal = decimalToToken(parseFloat(initialErcBalRedeemer1), await MockErc20C.decimals()) + expectedReturn;
-    // let redeemTx = await PoolC.redeem(redeemAmount, {
-    //   from: users.redeemer1,
-    // });
-    // let finalBal = await MockErc20C.balanceOf(users.redeemer1);
-    // finalBal = decimalToToken(parseFloat(finalBal), await MockErc20C.decimals());
-    // assert.equal(finalBal, expectedFinal, 'redeemed balance');
+    let initialErcBalRedeemer2 = new BigNumber(await MockErc20C.balanceOf(users.redeemer2));
+    assert.ok(initialErcBalRedeemer2.eq(tokenToDecimalBN(0, await MockErc20C.decimals())), 'redeemer bal is not 0');
 
-    // assert.ok((await PoolC.totalSupply()).sub(await PoolC.balanceOf(users.superAdmin))
-    //   .eq(tokenToDecimalBN(80, await PoolC.decimals())), 'total circulation is not 80');
+    let redeemAmount = tokenToDecimalBN(20, await PoolC.decimals());
+    let expectedReturn = redeemAmount.times(await onePoolTokenValueBN());
+    let expectedFinal = initialErcBalRedeemer2.plus(expectedReturn);
+    await PoolC.redeem(redeemAmount, {
+      from: users.redeemer2,
+    });
+    let finalBal = BigNumber(await MockErc20C.balanceOf(users.redeemer2));
+    assert.deepEqual(finalBal.toFixed(0), expectedFinal.toFixed(0), 'redeemed balance');
+
+    let decimals = await PoolC.decimals();
+    assert.equal(decimalToTokenBN(finalBal, decimals).toFixed(2), 394.60, 'redeemed balance');
+
+    let finalCirculation = (await PoolC.totalSupply()).sub(await PoolC.balanceOf(users.superAdmin));
+    finalCirculation = BigNumber(finalCirculation);
+
+    assert.ok(finalCirculation.eq(tokenToDecimalBN(260, await PoolC.decimals())), 'total circulation is not 260');
   });
 });

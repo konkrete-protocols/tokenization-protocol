@@ -13,6 +13,9 @@ const {
   decimalToTokenBN
 } = require('./utils/token-helper');
 
+//  For decimal truncation like solidity
+BigNumber.config({ ROUNDING_MODE: BigNumber.ROUND_DOWN })
+
 const Pool = artifacts.require('PoolToken');
 const RTokenMock = artifacts.require('RTokenMock');
 
@@ -24,6 +27,12 @@ const onePoolTokenValue = async () => {
   let poolErcBal = (await RTokenMockC.balanceOf(PoolC.address)).add(await RTokenMockC.interestPayableOf(PoolC.address));
   let poolTokenCirculation = (await PoolC.totalSupply()).sub(await PoolC.balanceOf(users.superAdmin));
   return parseFloat(poolErcBal) / parseFloat(poolTokenCirculation);
+}
+
+const onePoolTokenValueBN = async () => {
+  let poolErcBal = (await RTokenMockC.balanceOf(PoolC.address)).add(await RTokenMockC.interestPayableOf(PoolC.address));
+  let poolTokenCirculation = (await PoolC.totalSupply()).sub(await PoolC.balanceOf(users.superAdmin));
+  return BigNumber(poolErcBal).div(BigNumber(poolTokenCirculation));
 }
 
 before('Deploy Erc20 and Pool contract', async () => {
@@ -39,6 +48,8 @@ it('Get accounts', async () => {
   accounts = await web3.eth.getAccounts();
   users.superAdmin = accounts[0];
   users.randomUser = accounts[1];
+  users.redeemer1 = accounts[2];
+  users.redeemer2 = accounts[3];
 });
 describe('Pool Deployment Test', () => {
   it('check name, symbol, decimal', async() => {
@@ -87,7 +98,6 @@ describe('Mint Pool Tokens', () => {
 });
 describe('Redeem Cases', () => {
   before('Set interest of rToken and reduce pool tokens', async () => {
-    users.redeemer1 = accounts[2];
     await RTokenMockC.setInterestAmount(tokenToDecimalBN(100, await RTokenMockC.decimals()));
     await PoolC.transfer(users.redeemer1, tokenToDecimalBN(100, await RTokenMockC.decimals()));
   });
@@ -159,5 +169,44 @@ describe('Redeem Cases', () => {
 
     assert.ok(BigNumber(await PoolC.totalSupply()).minus(await PoolC.balanceOf(users.superAdmin))
       .eq(tokenToDecimalBN(80, await PoolC.decimals())), 'total circulation is not 80');
+  });
+  it('Mint 5000 erc20 and circulate 200 pool token then redeem 10 pool tokens', async() => {
+    let decimals = await PoolC.decimals();
+
+    await RTokenMockC.setInterestAmount(tokenToDecimalBN(5000, await RTokenMockC.decimals()));
+    let interestAmount = BigNumber(await RTokenMockC.interestPayableOf(PoolC.address));
+    let initialErcBalPool = BigNumber(await RTokenMockC.balanceOf(PoolC.address)).plus(interestAmount);
+    
+    assert.equal(decimalToTokenBN(initialErcBalPool, decimals).toFixed(2), 5524.44, 'redeemed balance');
+
+    await PoolC.mintPoolTokens(tokenToDecimalBN(200, await RTokenMockC.decimals()), {
+      from: users.superAdmin,
+    });
+    await PoolC.transfer(users.redeemer2, tokenToDecimalBN(200, await RTokenMockC.decimals()), {
+      from: users.superAdmin
+    });
+
+    let realCirculationSupply = (await PoolC.totalSupply()).sub(await PoolC.balanceOf(users.superAdmin));
+    realCirculationSupply = BigNumber(realCirculationSupply)
+    assert.ok(realCirculationSupply.eq(tokenToDecimalBN(280, await PoolC.decimals())), 'total circulation is not 280');
+
+    let initialErcBalRedeemer2 = new BigNumber(await RTokenMockC.balanceOf(users.redeemer2));
+    assert.ok(initialErcBalRedeemer2.eq(tokenToDecimalBN(0, await RTokenMockC.decimals())), 'redeemer bal is not 0');
+
+    let redeemAmount = tokenToDecimalBN(20, await PoolC.decimals());
+    let expectedReturn = redeemAmount.times(await onePoolTokenValueBN());
+    let expectedFinal = initialErcBalRedeemer2.plus(expectedReturn);
+    await PoolC.redeem(redeemAmount, {
+      from: users.redeemer2,
+    });
+    let finalBal = BigNumber(await RTokenMockC.balanceOf(users.redeemer2));
+    assert.deepEqual(finalBal.toFixed(0), expectedFinal.toFixed(0), 'redeemed balance');
+
+    assert.equal(decimalToTokenBN(finalBal, decimals).toFixed(2), 394.60, 'redeemed balance');
+
+    let finalCirculation = (await PoolC.totalSupply()).sub(await PoolC.balanceOf(users.superAdmin));
+    finalCirculation = BigNumber(finalCirculation);
+
+    assert.ok(finalCirculation.eq(tokenToDecimalBN(260, await PoolC.decimals())), 'total circulation is not 260');
   });
 });
