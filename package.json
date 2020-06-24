@@ -1,17 +1,19 @@
 {
   "name": "tokenization-smart-contracts",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Asset Tokenization module for Konkrete",
   "main": "index.js",
   "scripts": {
     "compile": "truffle compile",
-    "test": "truffle test"
+    "test": "truffle test",
+    "lint": "solium -d contracts/"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@openzeppelin/test-helpers": "^0.5.6",
     "bignumber.js": "^9.0.0",
+    "ethlint": "^1.2.5",
     "truffle-plugin-verify": "^0.3.10"
   },
   "dependencies": {

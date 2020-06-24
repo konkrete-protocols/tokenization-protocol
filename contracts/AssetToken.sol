@@ -18,6 +18,8 @@ contract AssetToken is BasePoolToken {
     ) BasePoolToken(_erc20Token, _name, _symbol, _decimals)
       public {
         require(bytes(_url).length != 0, "Empty document url");
+
+        // solium-disable-next-line security/no-block-members
         require(_dueDate > now, "Due date has already passed");     // maybe duedate is optional
 
         documentUrl = _url;
@@ -45,7 +47,6 @@ contract AssetToken is BasePoolToken {
     }
 
     function redeem() public {
-        
     }
 
 }
