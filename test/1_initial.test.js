@@ -6,7 +6,7 @@ let master, randomErc20, accounts;
 const nullAddress = '0x0000000000000000000000000000000000000000';
 
 before('Deploy master contract', async () => {
-  master = await Master.deployed();
+  master = await Master.new();
 });
 
 describe('Master Deployment', () => {
