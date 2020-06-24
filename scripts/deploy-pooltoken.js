@@ -5,16 +5,22 @@
 const { promisify } = require("util");
 const BigNumber = require('bignumber.js');
 const rl = require("./common/rl");
+const defaults = require("./common/defaults");
 const PoolToken = artifacts.require("PoolToken");
+const ERC20Detailed = artifacts.require("ERC20Detailed");
 
 module.exports = async (callback) => {
   try {
 
-    let name = await promisify(rl.question)("Provide PoolToken Name/Description: ");
-    let symbol = await promisify(rl.question)("Provide PoolToken Symbol: ");
-    let decimals = await promisify(rl.question)("Provide PoolToken Decimals (Should be equal to Rtoken decimals): ");
-    let rTokenAddress = await promisify(rl.question)("Provide rToken Address: ");
-    let initialSupply = await promisify(rl.question)("Provide initial Pool Token supply: ");
+    const network = process.argv[4];
+
+    let name = await promisify(rl.question)("Provide PoolToken Name/Description: ") || defaults.ptName;
+    let symbol = await promisify(rl.question)("Provide PoolToken Symbol: ") || defaults.ptSymbol;
+    let rTokenAddress = await promisify(rl.question)("Provide rToken Address: ") || defaults[network].rTokenAddress;
+    let initialSupply = await promisify(rl.question)("Provide initial Pool Token supply: ") || defaults.ptSupply;
+
+    const erc = await ERC20Detailed.at(rTokenAddress);
+    let decimals = await erc.decimals();
     
     if (!name || !symbol || !decimals || !rTokenAddress || !initialSupply) {
         console.log("Invalid Input!!! Returning");
@@ -22,7 +28,6 @@ module.exports = async (callback) => {
     }
 
     let iniSuppDecimals = BigNumber(initialSupply * Math.pow(10, decimals));
-    // iniSuppDecimals = web3.utils.toBN(iniSuppDecimals);
 
     let PoolC = await PoolToken.new(rTokenAddress, name, symbol, decimals, iniSuppDecimals);
 
