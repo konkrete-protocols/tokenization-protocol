@@ -11,3 +11,6 @@ package-lock.json
 # test coverage
 /coverage.json
 /coverage
+
+# editor settings - vscode
+.vscode
