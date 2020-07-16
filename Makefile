@@ -1,9 +1,11 @@
-NETWORK=kovan
 
 build:
 	npx truffle build
 
 deploy-pooltoken: build
-	npx truffle exec --network $(NETWORK) scripts/deploy-pooltoken.js
+	npx truffle exec --network $(network) scripts/deploy-pooltoken.js
 
-.PHONY: build deploy-pooltoken
+deploy-tokenization-master: build
+	npx truffle exec --network $(network) scripts/deploy-tokenize-master.js
+
+.PHONY: build deploy-pooltoken deploy-tokenization-master
