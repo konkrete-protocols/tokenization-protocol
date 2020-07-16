@@ -19,9 +19,6 @@ contract AssetToken is BasePoolToken {
       public {
         require(bytes(_url).length != 0, "Empty document url");
 
-        // solium-disable-next-line security/no-block-members
-        require(_dueDate > now, "Due date has already passed");     // maybe duedate is optional
-
         documentUrl = _url;
         dueDate = _dueDate;
         collectBuyerDetails = _collectBuyerDetails;
@@ -35,18 +32,6 @@ contract AssetToken is BasePoolToken {
     function mintAssetTokens(uint256 amount) external onlyOwner returns (bool) {
         _mint(msg.sender, amount);
         return true;
-    }
-
-    function mint(uint256 mintAmount) external returns (bool) {
-        require(
-            IERC20(erc20Token).allowance(msg.sender, address(this)) >= mintAmount,
-            "Not enough allowance"
-        );
-
-
-    }
-
-    function redeem() public {
     }
 
 }
