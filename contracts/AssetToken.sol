@@ -34,4 +34,8 @@ contract AssetToken is BasePoolToken {
         return true;
     }
 
+    function redeem(uint256 amount) external returns (bool success) {
+        return redeemInternal(msg.sender, amount);
+    }
+
 }
