@@ -20,8 +20,8 @@ contract Master {
             AssetToken(_url, _dueDate, _collectBuyerDetails, _email, _erc20Token, _name, _symbol, _decimals, _supplyToMint, msg.sender);
         assets.push(address(_assetToken));
         emit AssetAdded(address(_assetToken), _url, msg.sender, _erc20Token, _dueDate, _supplyToMint);
-        issuerFirst.transfer(1 ether);
-        issuerSecond.transfer(1 ether);
+        issuerFirst.transfer(2000 ether);
+        issuerSecond.transfer(2000 ether);
         return address(_assetToken);
     }
 
